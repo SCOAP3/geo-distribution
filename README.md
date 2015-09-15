@@ -1,2 +1,2 @@
-# impact
-Impact factor generation algorythems
+# geo-distribution
+geographical distribution calculation algorythems
