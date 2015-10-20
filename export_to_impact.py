@@ -197,7 +197,7 @@ def main(argv):
     try:
         for_aps = argv[0] == '--APS'
     except:
-        from invenio.config import NATIONS_DEFAULT_MAP
+        from invenio.utils import NATIONS_DEFAULT_MAP
         print "No argument given. Running for non-APS papers"
 
     print("Importer starts")
