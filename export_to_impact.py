@@ -205,43 +205,61 @@ def main(argv):
     ic = ImportCreator(for_aps)
 
     if for_aps:
-        ids = perform_request_search(p="773__p:Phys.Rev. 773__v:/d89|d90/")
+        rev_d = perform_request_search(p="773__p:Phys.Rev. 773__v:/d89|d90|d91|d92/")
+        rev_c = perform_request_search(p="773__p:Phys.Rev. 773__v:/c89|c90|c91|c92/ 037__c:/hep-ex|hep-ph|hep-lat|hep-th/")
+        rev_lett = perform_request_search(p="773__p:Phys.Rev.Lett. 773__v:/112|113|114|115/ 037__c:/hep-ex|hep-ph|hep-lat|hep-th/")
+        ids_count = len(rev_d)+len(rev_c)+len(rev_lett)
+        ids_select = {"APS Phys.Rev.D": rev_d, "APS Phys.Rev.C": rev_c, "APS Phys.Rev.Lett.": rev_lett}
     else:
-        ids = perform_request_search(p="")
-    print("Going to import %s records" % (len(ids),))
+        ids_select = {"all": perform_request_search(p="")}
+        ids_count = len(ids_select['all'])
+    print("Going to import %s records" % (ids_count,))
 
-    for recid in ids:
-        if not ic.impact_db_c.execute("SELECT idrecord FROM record WHERE idrecord=%s", (recid,)):
-            rec = get_record(recid)
-            j_name = sorted(rec['773'][0][0], key=lambda x: 1 if x[0] == 'p' else 2)[0][1]
 
-            if for_aps:
-                publ = "APS Phys.Rev.D"
+    for journal_name, ids in ids_select.iteritems():
+        for recid in ids:
+            if not ic.impact_db_c.execute("SELECT idrecord FROM record WHERE idrecord=%s", (recid,)):
+                rec = get_record(recid)
+                j_name = sorted(rec['773'][0][0], key=lambda x: 1 if x[0] == 'p' else 2)[0][1]
+
+                if for_aps:
+                    publ = journal_name
+                else:
+                    publ = sorted(rec['260'][0][0], key=lambda x: 1 if x[0] == 'b' else 2)[0][1]
+                year = sorted(rec['773'][0][0], key=lambda x: 1 if x[0] == 'y' else 2)[0][1]
+                experiment = record_get_field_value(rec, '693','%','%','e')
+                print(experiment)
+                def _count_authors(record):
+                    author_count = 0
+                    if '100' in record:
+                        author_count = 1
+                    if '700' in record:
+                        author_count += len(record['700'])
+                    return author_count
+
+                author_count = _count_authors(rec)
+                # Inserting record
+                try:
+                    ic.impact_db_c.execute("""INSERT INTO
+                                           record (idrecord, journal_name, publisher, pub_year, experiment, author_count)
+                                           VALUES (%s, %s, %s, %s, %s, %s)""", (recid, j_name, publ, year, experiment, author_count))
+                except Exception as e:
+                    print("Error - faild to create record entry for recid %s" % (recid,))
+                    raise e
+                if '100' in rec:
+                    for author in rec['100']:
+                        ic.insert_author(author, recid, 0)
+                if '700' in rec:
+                    for coauthor in rec['700']:
+                        ic.insert_author(coauthor, recid, 1)
+                ic.impact_db.commit()
             else:
-                publ = sorted(rec['260'][0][0], key=lambda x: 1 if x[0] == 'b' else 2)[0][1]
-            year = sorted(rec['773'][0][0], key=lambda x: 1 if x[0] == 'y' else 2)[0][1]
-            # Inserting record
-            try:
-                ic.impact_db_c.execute("""INSERT INTO
-                                       record (idrecord, journal_name, publisher, pub_year)
-                                       VALUES (%s, %s, %s, %s)""", (recid, j_name, publ, year))
-            except Exception as e:
-                print("Error - faild to create record entry for recid %s" % (recid,))
-                raise e
-            if '100' in rec:
-                for author in rec['100']:
-                    ic.insert_author(author, recid, 0)
-            if '700' in rec:
-                for coauthor in rec['700']:
-                    ic.insert_author(coauthor, recid, 1)
-            ic.impact_db.commit()
-        else:
-            print("Record %s already in Impact DB" % (recid,))
-        count += 1
-        print("Done %s record out of %s with recid: %s" % (count, len(ids), recid))
+                print("Record %s already in Impact DB" % (recid,))
+            count += 1
+            print("Done %s record out of %s with recid: %s" % (count, len(ids), recid))
     ic.impact_db.close()
+
 
 
 if __name__ == "__main__":
     main(sys.argv[1:])
-
