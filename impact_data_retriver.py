@@ -56,10 +56,11 @@ for name, search_term in journals.items():
                     final[i] = 0
             print "%s: %s" % (recid, final)
             result=[]
+            impact_file.write("recid,%s\n" % (",".join(final.keys()),))
             for k, v in sorted(final.items(), key=lambda x: x[0]):
-                result.extend([str(k), str(v)])
-            result=','.join(result)
-            print "%s: %s" % (recid, result)
+                result.append(v)
+            result = ','.join(result)
+            #print "%s: %s" % (recid, result)
             impact_file.write("%s,%s\n" % (recid[0], result))
 
         impact_file.close()
