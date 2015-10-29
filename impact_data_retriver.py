@@ -18,7 +18,10 @@ journals={'NPB':'Nuclear Physics B',
          'APPB':'Acta Physica Polonica B',
          'CPC':'Chinese Phys. C',
          'EPJC':'EPJC',
-         'NJP':'New J. Phys.'}
+         'NJP':'New J. Phys.',
+         'Phys.Rev.D':'APS Phys.Rev.D',
+         'Phys.Rev.C':'APS Phys.Rev.C',
+         'Phys.Rev.Lett':'APS Phys.Rev.Lett.'}
 
 
 for name, search_term in journals.items():
