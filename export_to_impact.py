@@ -220,12 +220,12 @@ def main(argv):
         for recid in ids:
             if not ic.impact_db_c.execute("SELECT idrecord FROM record WHERE idrecord=%s", (recid,)):
                 rec = get_record(recid)
-                j_name = sorted(rec['773'][0][0], key=lambda x: 1 if x[0] == 'p' else 2)[0][1]
-
                 if for_aps:
-                    publ = journal_name
+                    publ = journal_name.split()[0]
+                    j_name = journal_name.split()[1]
                 else:
                     publ = sorted(rec['260'][0][0], key=lambda x: 1 if x[0] == 'b' else 2)[0][1]
+                    j_name = sorted(rec['773'][0][0], key=lambda x: 1 if x[0] == 'p' else 2)[0][1]
                 year = sorted(rec['773'][0][0], key=lambda x: 1 if x[0] == 'y' else 2)[0][1]
                 experiment = record_get_field_value(rec, '693','%','%','e')
                 print(experiment)
